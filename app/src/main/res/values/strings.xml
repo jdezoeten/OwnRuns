@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">OwnRuns</string>
+    <string name="notification_title">OwnRuns</string>
+    <string name="notification_message">OwnRuns is currently running</string>
+    <string name="ticker_text">Ticker text</string>
+    <string name="ble_not_supported">Bluetooth not allowed or supported</string>
+    <string name="menu_start">Start</string>
+    <string name="menu_stop">Stop</string>
+</resources>
