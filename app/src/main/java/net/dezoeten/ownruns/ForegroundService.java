@@ -34,6 +34,40 @@ import java.util.TimerTask;
 import static android.os.SystemClock.elapsedRealtime;
 import static android.view.SoundEffectConstants.CLICK;
 
+class Record {
+    Record() {
+        mTimeStamp  = 0;
+        mHeartRate   = 0;
+        mSpeed       = 0;
+        mDistance    = 0;
+        mCadence     = 0;
+        mStride      = 0;
+        mIncline     = 0;
+        mPower       = 0;
+    }
+
+    Record(Record other) {
+        mTimeStamp   = other.mTimeStamp;
+        mHeartRate   = other.mHeartRate;
+        mSpeed       = other.mSpeed;
+        mDistance    = other.mDistance;
+        mCadence     = other.mCadence;
+        mStride      = other.mStride;
+        mIncline     = other.mIncline;
+        mPower       = other.mPower;
+    }
+
+    long mTimeStamp;
+    int mHeartRate;
+    float mSpeed;
+    float mDistance;
+    int mCadence;
+    float mStride;
+    float mIncline;
+    int mPower;
+};
+
+
 public class ForegroundService extends Service {
     private final static String TAG = ForegroundService.class.getSimpleName();
 
@@ -69,38 +103,7 @@ public class ForegroundService extends Service {
     private BluetoothLeService      mBluetoothLeService;
     private List<String>            mBluetoothLeDeviceAddressList;
 
-    class Record {
-        Record() {
-            mTimeStamp  = 0;
-            mHeartRate   = 0;
-            mSpeed       = 0;
-            mDistance    = 0;
-            mCadence     = 0;
-            mStride      = 0;
-            mIncline     = 0;
-            mPower       = 0;
-        }
 
-        Record(Record other) {
-            mTimeStamp   = other.mTimeStamp;
-            mHeartRate   = other.mHeartRate;
-            mSpeed       = other.mSpeed;
-            mDistance    = other.mDistance;
-            mCadence     = other.mCadence;
-            mStride      = other.mStride;
-            mIncline     = other.mIncline;
-            mPower       = other.mPower;
-        }
-
-        long mTimeStamp;
-        int mHeartRate;
-        float mSpeed;
-        float mDistance;
-        int mCadence;
-        float mStride;
-        float mIncline;
-        int mPower;
-    };
 
     private enum IntervalTrigger {
         TIME,

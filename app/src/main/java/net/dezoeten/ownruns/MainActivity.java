@@ -1,11 +1,16 @@
 package net.dezoeten.ownruns;
 
+import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModel;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,11 +25,139 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
-import static android.os.SystemClock.elapsedRealtime;
+class CurrentSensorData extends ViewModel {
+
+    public MutableLiveData<Boolean> getRunning() {
+        if (mRunning == null) {
+            mRunning = new MutableLiveData<Boolean>();
+            mRunning.setValue(false);
+        }
+
+        return mRunning;
+    }
+
+    public MutableLiveData<Long> getElapsedTime() {
+        if (mElapsedTime == null) {
+            mElapsedTime = new MutableLiveData<Long>();
+            mElapsedTime.setValue(Long.valueOf(0));
+        }
+        return mElapsedTime;
+    }
+
+    public MutableLiveData<Float> getDistance() {
+        if (mDistance == null) {
+            mDistance = new MutableLiveData<Float>();
+            mDistance.setValue(Float.valueOf(0) );
+        }
+        return mDistance;
+    }
+
+    public MutableLiveData<Float> getSpeed() {
+        if (mSpeed == null) {
+            mSpeed = new MutableLiveData<Float>();
+            mSpeed.setValue(Float.valueOf(0));
+        }
+        return mSpeed;
+    }
+
+    public MutableLiveData<Float> getStride() {
+        if (mStride == null) {
+            mStride = new MutableLiveData<Float>();
+            mStride.setValue(Float.valueOf(0));
+        }
+        return mStride;
+    }
+
+    public MutableLiveData<Float> getIncline() {
+        if (mIncline == null){
+            mIncline = new MutableLiveData<Float>();
+            mIncline.setValue(Float.valueOf(0));
+        }
+        return mIncline;
+    }
+
+    public MutableLiveData<String> getIntervalType() {
+        if (mIntervalType == null) {
+            mIntervalType = new MutableLiveData<String>();
+            mIntervalType.setValue("Distance");
+        }
+        return mIntervalType;
+    }
+
+    public MutableLiveData<Float> getAvgSpeed() {
+        if (mAvgSpeed == null) {
+            mAvgSpeed = new MutableLiveData<Float>();
+            mAvgSpeed.setValue(Float.valueOf(0));
+        }
+        return mAvgSpeed;
+    }
+
+    public MutableLiveData<Long> getHeartRate() {
+        if (null == mHeartRate) {
+            mHeartRate = new MutableLiveData<Long>();
+            mHeartRate.setValue(Long.valueOf(0));
+        }
+        return mHeartRate;
+    }
+
+    public MutableLiveData<Long> getCadence() {
+        if (mCadence == null) {
+            mCadence = new MutableLiveData<Long>();
+            mCadence.setValue(Long.valueOf(0));
+        }
+        return mCadence;
+    }
+
+    public MutableLiveData<Long> getPower() {
+        if (mPower == null) {
+            mPower = new MutableLiveData<Long>();
+            mPower.setValue(Long.valueOf(0));
+        }
+        return mPower;
+    }
+
+    public MutableLiveData<Long> getInterval() {
+        if (mInterval == null) {
+            mInterval = new MutableLiveData<Long>();
+            mInterval.setValue(Long.valueOf(0));
+        }
+        return mInterval;
+    }
+
+    public MutableLiveData<Long> getIntervalCount() {
+        if (mIntervalCount == null) {
+            mIntervalCount = new MutableLiveData<Long>();
+            mIntervalCount.setValue(Long.valueOf(0) );
+        }
+        return mIntervalCount;
+    }
+
+    public MutableLiveData<Long> getIntervalRemaining() {
+        if (mIntervalRemaining == null) {
+            mIntervalRemaining = new MutableLiveData<Long>();
+            mIntervalRemaining.setValue(Long.valueOf(0) );
+        }
+        return mIntervalRemaining;
+    }
+
+    private MutableLiveData<Boolean>    mRunning;
+    private MutableLiveData<Long>       mElapsedTime;
+    private MutableLiveData<Float>      mDistance;
+    private MutableLiveData<Float>      mStride;
+    private MutableLiveData<Float>      mSpeed;
+    private MutableLiveData<Long>       mHeartRate;
+    private MutableLiveData<Long>       mCadence;
+    private MutableLiveData<Float>      mIncline;
+    private MutableLiveData<Long>       mPower;
+    private MutableLiveData<Long>       mInterval;
+    private MutableLiveData<Long>       mIntervalCount;
+    private MutableLiveData<String>     mIntervalType;
+    private MutableLiveData<Long>       mIntervalRemaining;
+    private MutableLiveData<Float>      mAvgSpeed;
+
+}
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getSimpleName();
@@ -35,33 +168,10 @@ public class MainActivity extends AppCompatActivity {
     public final static String ACTION_RUN_STOPPED =
             "com.example.bluetooth.le.ACTION_RUN_STOPPED";
 
-    //we are going to use a handler to be able to run in our TimerTask
-    final Handler mHandler = new Handler();
-
-    private int mBackButtonCount;
-
     private List<FrameLayout>       mFrameLayoutList;
     private List<IndicatorBase>     mIndicatorList;
-
-    private boolean    mRunning;
-    private long       mElapsedTime = 0;
-    private float      mDistance = 0;
-    private float      mStride = 0;
-    private float      mSpeed = 0;
-    private int        mHeartRate = 0;
-    private int        mCadence = 0;
-    private float      mIncline = 0;
-    private int        mPower = 0;
-
-    private int        mInterval = 0;
-    private int        mIntervalCount = 0;
-
-    private String     mIntervalType = "Time";
-    private long       mIntervalRemaining = 0;
-
-    // Calculated
-    private float       mAvgSpeed = 0;
-
+    private CurrentSensorData       mCurrentSensorData;
+    private int                     mBackButtonCount;
 
     // ACTION_SENSOR_DATA: new data from sensor.
     private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
@@ -71,29 +181,24 @@ public class MainActivity extends AppCompatActivity {
             if (BluetoothLeService.ACTION_SENSOR_DATA.equals(action)) {
                 Bundle bundle = intent.getExtras();
                 for (String key : bundle.keySet()) {
-                    if (key.equals(BluetoothLeService.HEART_RATE) ) mHeartRate = bundle.getInt(key);
-                    else if (key.equals(BluetoothLeService.SPEED) ) mSpeed = bundle.getFloat(key);
-                    else if (key.equals(BluetoothLeService.DISTANCE) ) mDistance = bundle.getFloat(key);
-                    else if (key.equals(BluetoothLeService.CADENCE) ) mCadence = bundle.getInt(key);
-                    else if (key.equals(BluetoothLeService.STRIDE) ) mStride = bundle.getFloat(key);
-                    else if (key.equals(BluetoothLeService.INCLINE) ) mIncline = bundle.getFloat(key);
-                    else if (key.equals(BluetoothLeService.POWER) ) mPower = bundle.getInt(key);
+                    if (key.equals(BluetoothLeService.HEART_RATE) ) mCurrentSensorData.getHeartRate().setValue(Long.valueOf(bundle.getInt(key) ) );
+                    else if (key.equals(BluetoothLeService.SPEED) ) mCurrentSensorData.getSpeed().setValue(bundle.getFloat(key) );
+                    else if (key.equals(BluetoothLeService.DISTANCE) ) mCurrentSensorData.getDistance().setValue(bundle.getFloat(key) );
+                    else if (key.equals(BluetoothLeService.CADENCE) ) mCurrentSensorData.getCadence().setValue(Long.valueOf(bundle.getInt(key)) );
+                    else if (key.equals(BluetoothLeService.STRIDE) ) mCurrentSensorData.getStride().setValue(bundle.getFloat(key) );
+                    else if (key.equals(BluetoothLeService.INCLINE) ) mCurrentSensorData.getIncline().setValue(bundle.getFloat(key) );
+                    else if (key.equals(BluetoothLeService.POWER) ) mCurrentSensorData.getPower().setValue(Long.valueOf(bundle.getInt(key)) );
                 }
-
-                valuesChanged();
             }
             else if (ForegroundService.ACTION_WORKOUT_DATA.equals(action)) {
                 Bundle bundle = intent.getExtras();
                 for (String key : bundle.keySet()) {
-                    if (key.equals(ForegroundService.WORKOUT_ELAPSED_TIME) ) mElapsedTime = bundle.getLong(key);
-                    else if(key.equals(ForegroundService.WORKOUT_INTERVAL) ) mInterval = bundle.getInt(key);
-                    else if(key.equals(ForegroundService.WORKOUT_INTERVAL_COUNT) ) mIntervalCount = bundle.getInt(key);
-                    else if(key.equals(ForegroundService.WORKOUT_INTERVAL_TRIGGER) ) mIntervalType = bundle.getString(key);
-                    else if(key.equals(ForegroundService.WORKOUT_VALUE_TO_TRIGGER) ) mIntervalRemaining = bundle.getLong(key);
-
+                    if (key.equals(ForegroundService.WORKOUT_ELAPSED_TIME) ) mCurrentSensorData.getElapsedTime().setValue(bundle.getLong(key) );
+                    else if(key.equals(ForegroundService.WORKOUT_INTERVAL) ) mCurrentSensorData.getInterval().setValue(Long.valueOf(bundle.getInt(key)) );
+                    else if(key.equals(ForegroundService.WORKOUT_INTERVAL_COUNT) ) mCurrentSensorData.getIntervalCount().setValue(Long.valueOf(bundle.getInt(key)) );
+                    else if(key.equals(ForegroundService.WORKOUT_INTERVAL_TRIGGER) ) mCurrentSensorData.getIntervalType().setValue(bundle.getString(key) );
+                    else if(key.equals(ForegroundService.WORKOUT_VALUE_TO_TRIGGER) ) mCurrentSensorData.getIntervalRemaining().setValue(bundle.getLong(key) );
                 }
-
-                valuesChanged();
             }
         }
     };
@@ -115,6 +220,10 @@ public class MainActivity extends AppCompatActivity {
         Intent startIntent = new Intent(MainActivity.this, ForegroundService.class);
         startIntent.setAction(ForegroundService.STARTFOREGROUND_ACTION);
         startService(startIntent);
+
+        // Get the ViewModel.
+        mCurrentSensorData = ViewModelProviders.of(this).get(CurrentSensorData.class);
+
 
         mBackButtonCount = 0;
         mFrameLayoutList = new ArrayList<FrameLayout>();
@@ -148,10 +257,6 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG, "onDestroy()");
 
-        if (mRunning) {
-            stopRunning();
-        }
-
     }
 
     /**
@@ -165,6 +270,11 @@ public class MainActivity extends AppCompatActivity {
 
         if(mBackButtonCount >= 1)
         {
+            if (mCurrentSensorData.getRunning().getValue() ) {
+                mCurrentSensorData.getRunning().setValue(false);
+                stopRunning();
+            }
+
             Intent stopIntent = new Intent(MainActivity.this, ForegroundService.class);
             stopIntent.setAction(ForegroundService.STOPFOREGROUND_ACTION);
             startService(stopIntent);
@@ -189,7 +299,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
-        if (!mRunning) {
+        if (!mCurrentSensorData.getRunning().getValue() ) {
             menu.findItem(R.id.menu_stop).setVisible(false);
             menu.findItem(R.id.menu_start).setVisible(true);
         } else {
@@ -204,11 +314,11 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.menu_start:
                 startRunning();
-                mRunning = true;
+                mCurrentSensorData.getRunning().setValue(true);
                 break;
             case R.id.menu_stop:
                 stopRunning();
-                mRunning = false;
+                mCurrentSensorData.getRunning().setValue(false);
                 break;
         }
         invalidateOptionsMenu();
@@ -235,24 +345,21 @@ public class MainActivity extends AppCompatActivity {
         return String.format("%02d:%02d:%02d", hr, min, sec);
     }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-    }
-
     class IndicatorBase {
         void setValue(String value){
         }
     };
 
     class IndicatorNameValue extends IndicatorBase {
-        private final ImageView mImage;
-        private View    mView;
-        private TextView mName;
-        private TextView mValue;
+        protected final ImageView       mImage;
+        protected View                  mView;
+        protected TextView              mName;
+        protected TextView              mValue;
 
         IndicatorNameValue(MainActivity activity, FrameLayout frame, String name, String initialValue) {
             LayoutInflater l = activity.getLayoutInflater();
+
+
             mView = l.inflate(R.layout.indicator_name_value, null);
             mName = (TextView)mView.findViewById(R.id.indicator_name);
             mValue = (TextView)mView.findViewById(R.id.indicator_value);
@@ -269,7 +376,6 @@ public class MainActivity extends AppCompatActivity {
             else if (name.equals("Stride") ) mImage.setImageResource(R.mipmap.ic_elise_feet);
             else if (name.equals("Power") ) mImage.setImageResource(R.mipmap.ic_elise_feet);
 
-
             mName.setText(name);
             mValue.setText(initialValue);
 
@@ -282,6 +388,138 @@ public class MainActivity extends AppCompatActivity {
         }
 
     };
+
+    class LongIndicator extends IndicatorNameValue {
+
+        LongIndicator(MainActivity activity, FrameLayout frame, String name, String initialValue, MutableLiveData<Long> value) {
+            super(activity, frame, name, initialValue);
+
+            // Create the observer which updates the UI.
+            final Observer<Long> valueObserver = new Observer<Long>() {
+                @Override
+                public void onChanged(@Nullable final Long newValue) {
+                    // Update the UI, in this case, a TextView.
+                    setValue(String.format("%d", newValue) );
+                }
+            };
+
+            value.observe(activity, valueObserver);
+        }
+    }
+
+    class FloatIndicator extends IndicatorNameValue {
+
+        FloatIndicator(MainActivity activity, FrameLayout frame, String name, String initialValue, MutableLiveData<Float> value) {
+            super(activity, frame, name, initialValue);
+
+            // Create the observer which updates the UI.
+            final Observer<Float> valueObserver = new Observer<Float>() {
+                @Override
+                public void onChanged(@Nullable final Float newValue) {
+                    // Update the UI, in this case, a TextView.
+                   setValue(String.format("%.02f", newValue) );
+                }
+            };
+
+            value.observe(activity, valueObserver);
+        }
+    }
+
+    class TimeIndicator extends IndicatorNameValue {
+
+        TimeIndicator(MainActivity activity, FrameLayout frame, String name, String initialValue, MutableLiveData<Long> time) {
+            super(activity, frame, name, initialValue);
+
+            // Create the observer which updates the UI.
+            final Observer<Long> valueObserver = new Observer<Long>() {
+                @Override
+                public void onChanged(@Nullable final Long newValue) {
+                    // Update the UI, in this case, a TextView.
+                    setValue(formatInterval(newValue) );
+                }
+            };
+
+            time.observe(activity, valueObserver);
+        }
+    }
+
+    class IntervalRemainingIndicator extends IndicatorNameValue {
+
+        MutableLiveData<String> mIntervalType;
+        MutableLiveData<Long> mRemaining;
+
+        IntervalRemainingIndicator(MainActivity activity, FrameLayout frame, String name, String initialValue, MutableLiveData<String> intervalType, MutableLiveData<Long> remaining) {
+            super(activity, frame, name, initialValue);
+
+            mIntervalType = intervalType;
+            mRemaining = remaining;
+
+            final Observer<Long> remainingObserver = new Observer<Long>() {
+                @Override
+                public void onChanged(@Nullable final Long newValue) {
+                    // Update the UI, in this case, a TextView.
+                    setValue();
+                }
+            };
+
+            final Observer<String> typeObserver = new Observer<String>() {
+                @Override
+                public void onChanged(@Nullable final String newValue) {
+                    // Update the UI, in this case, a TextView.
+                    setValue();
+                }
+            };
+
+            mRemaining.observe(activity, remainingObserver);
+            mIntervalType.observe(activity, typeObserver);
+        }
+
+        void setValue() {
+            if (mIntervalType.getValue().equals("Distance")) {
+                setValue(String.format("%dm", mRemaining.getValue() ));
+
+            } else if (mIntervalType.getValue().equals("Time")) {
+                setValue(formatInterval(mRemaining.getValue()));
+            }
+        }
+    }
+
+    class IntervalCountIndicator extends IndicatorNameValue {
+
+        MutableLiveData<Long> mCurrent;
+        MutableLiveData<Long> mTotal;
+
+        IntervalCountIndicator(MainActivity activity, FrameLayout frame, String name, String initialValue, MutableLiveData<Long> current, MutableLiveData<Long> total) {
+            super(activity, frame, name, initialValue);
+
+            mCurrent = current;
+            mTotal = total;
+
+            final Observer<Long> currentObserver = new Observer<Long>() {
+                @Override
+                public void onChanged(@Nullable final Long newValue) {
+                    // Update the UI, in this case, a TextView.
+                    setValue();
+                }
+            };
+
+            final Observer<Long> totalObserver = new Observer<Long>() {
+                @Override
+                public void onChanged(@Nullable final Long newValue) {
+                    // Update the UI, in this case, a TextView.
+                    setValue();
+                }
+            };
+
+            mCurrent.observe(activity, currentObserver);
+            mTotal.observe(activity, totalObserver);
+        }
+
+        void setValue() {
+            setValue( String.format("%d/%d", mCurrent.getValue().longValue()+1, mTotal.getValue()) );
+        }
+    }
+
 
     private void setLayout2x4() {
         setContentView(R.layout.activity_main_2x5);
@@ -301,37 +539,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setIndicators() {
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(0), "Heart Rate", "0"));
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(1), "Cadence", "0"));
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(2), "Speed", "0"));
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(3), "Power", "0"));
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(4), "Avg Speed", "0"));
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(5), "Distance", "0"));
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(6), "Stride", "0"));
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(7), "Incline", "0%"));
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(8), "Time", "0:00"));
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(9), "Remaining", "0"));
-        mIndicatorList.add(new IndicatorNameValue(this, mFrameLayoutList.get(10), "Interval", "0"));
-    }
-
-    private void valuesChanged() {
-        mIndicatorList.get(0).setValue( String.format("%d", mHeartRate) );
-        mIndicatorList.get(1).setValue( String.format("%d", mCadence) );
-        mIndicatorList.get(2).setValue( String.format("%.06f", mSpeed) );
-        mIndicatorList.get(3).setValue( String.format("%d", mPower) );
-        mIndicatorList.get(4).setValue( String.format("%.01f", mAvgSpeed) );
-        mIndicatorList.get(5).setValue( String.format("%.01f", mDistance) );
-        mIndicatorList.get(6).setValue( String.format("%.1f", mStride) );
-        mIndicatorList.get(7).setValue( String.format("%.1f", mIncline) );
-        mIndicatorList.get(8).setValue( formatInterval(mElapsedTime) );
-        if (mIntervalType.equals("Distance") ) {
-            mIndicatorList.get(9).setValue( String.format("%dm", mIntervalRemaining) );
-
-        }
-        else if (mIntervalType.equals("Time") ) {
-            mIndicatorList.get(9).setValue( formatInterval(mIntervalRemaining) );
-        }
-        mIndicatorList.get(10).setValue( String.format("%d/%d", mInterval+1, mIntervalCount) );
+        mIndicatorList.add(new LongIndicator(this, mFrameLayoutList.get(0), "Heart Rate", "0", mCurrentSensorData.getHeartRate()));
+        mIndicatorList.add(new LongIndicator(this, mFrameLayoutList.get(1), "Cadence", "0", mCurrentSensorData.getCadence()));
+        mIndicatorList.add(new FloatIndicator(this, mFrameLayoutList.get(2), "Speed", "0", mCurrentSensorData.getSpeed() ));
+        mIndicatorList.add(new LongIndicator(this, mFrameLayoutList.get(3), "Power", "0", mCurrentSensorData.getPower()));
+        mIndicatorList.add(new FloatIndicator(this, mFrameLayoutList.get(4), "Avg Speed", "0", mCurrentSensorData.getAvgSpeed()));
+        mIndicatorList.add(new FloatIndicator(this, mFrameLayoutList.get(5), "Distance", "0", mCurrentSensorData.getDistance()));
+        mIndicatorList.add(new FloatIndicator(this, mFrameLayoutList.get(6), "Stride", "0", mCurrentSensorData.getStride()));
+        mIndicatorList.add(new FloatIndicator(this, mFrameLayoutList.get(7), "Incline", "0%", mCurrentSensorData.getIncline()));
+        mIndicatorList.add(new TimeIndicator(this, mFrameLayoutList.get(8), "Time", "0:00", mCurrentSensorData.getElapsedTime()));
+        mIndicatorList.add(new IntervalRemainingIndicator(this, mFrameLayoutList.get(9), "Remaining", "0", mCurrentSensorData.getIntervalType(), mCurrentSensorData.getIntervalRemaining()));
+        mIndicatorList.add(new IntervalCountIndicator(this, mFrameLayoutList.get(10), "Interval", "0", mCurrentSensorData.getInterval(), mCurrentSensorData.getIntervalCount()));
     }
 
     private static IntentFilter makeGattUpdateIntentFilter() {
